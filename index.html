@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>迷ったときの2択ツール＋気分コメント</title>
+<style>
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #1f2c3a, #3a4a5a);
+  color: #fff;
+  transition: background 0.5s;
+}
+
+.container {
+  background: rgba(0,0,0,0.75);
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+h1 { margin-bottom: 20px; }
+
+input, select, textarea, button {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+}
+
+textarea {
+  resize: none;
+  height: 50px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover { background: #45a049; }
+
+#result {
+  margin-top: 20px;
+  font-size: 22px;
+  font-weight: bold;
+  min-height: 50px;
+  transition: transform 0.3s, color 0.3s;
+}
+
+#reason { margin-top: 10px; font-size: 16px; font-style: italic; color: #ddd; }
+
+.history { margin-top: 20px; font-size: 14px; color: #ccc; text-align: left; }
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>どっちにする？ 2択ツール</h1>
+
+<input type="text" id="optionA" placeholder="選択肢A">
+<input type="text" id="optionB" placeholder="選択肢B">
+
+<select id="mood">
+  <option value="neutral">今日の気分: 普通</option>
+  <option value="happy">元気 😊</option>
+  <option value="tired">疲れ気味 😴</option>
+  <option value="indecisive">迷い気味 🤔</option>
+  <option value="excited">やる気満々 😎</option>
+</select>
+
+<textarea id="comment" placeholder="今日の気持ちを自由に書こう"></textarea>
+
+<button onclick="decide()">決定！</button>
+
+<p id="result"></p>
+<p id="reason"></p>
+
+<div class="history" id="history"></div>
+</div>
+
+<script>
+const reasons = [
+  "今日は直感に従おう！",
+  "運勢的にはこちらが良いかも…",
+  "気分で決めると吉",
+  "挑戦するならこちら！",
+  "控えめに選ぶならこっち",
+  "なんとなくこっちが良さそう"
+];
+
+function decide() {
+  const a = document.getElementById("optionA").value || "A";
+  const b = document.getElementById("optionB").value || "B";
+  const mood = document.getElementById("mood").value;
+  const comment = document.getElementById("comment").value || "";
+
+  // 気分による確率補正
+  let probA = 0.5;
+  if(mood === "happy") probA = 0.5;       
+  else if(mood === "tired") probA = 0.6;  
+  else if(mood === "indecisive") probA = 0.7; 
+  else if(mood === "excited") probA = 0.5;   
+
+  const choice = Math.random() < probA ? a : b;
+  const color = choice === a ? "#3498db" : "#e74c3c";
+
+  const resultElem = document.getElementById("result");
+  resultElem.textContent = choice;
+  resultElem.style.color = color;
+  resultElem.style.transform = "scale(1.2)";
+  setTimeout(() => { resultElem.style.transform = "scale(1)"; }, 300);
+
+  const reason = reasons[Math.floor(Math.random() * reasons.length)];
+  document.getElementById("reason").textContent = reason;
+
+  saveHistory({a, b, mood, comment, choice, reason, time: new Date().toLocaleString()});
+  showHistory();
+
+  // 背景変化
+  document.body.style.background = choice === a 
+    ? "linear-gradient(135deg, #1f2c3a, #2c3e50)" 
+    : "linear-gradient(135deg, #3a1f2c, #5a3a4a)";
+}
+
+function saveHistory(entry) {
+  let histories = JSON.parse(localStorage.getItem("decisionHistory") || "[]");
+  histories.unshift(entry);
+  if(histories.length > 5) histories.pop();
+  localStorage.setItem("decisionHistory", JSON.stringify(histories));
+}
+
+function showHistory() {
+  const histories = JSON.parse(localStorage.getItem("decisionHistory") || "[]");
+  const container = document.getElementById("history");
+  container.innerHTML = "<strong>最近の選択：</strong><br>" +
+    histories.map(h => `${h.time}: ${h.choice} (${h.mood}) — ${h.reason} — コメント: ${h.comment}`).join("<br>");
+}
+
+window.onload = showHistory;
+</script>
+
+</body>
+</html>
